@@ -5,16 +5,12 @@ import { Toaster } from "@/components/ui/toaster";
 import NotFound from "@/pages/not-found";
 import LandingPage from "@/pages/landing-page";
 import AuthPage from "@/pages/auth-page";
-import CustomerHomePage from "@/pages/customer/home-page";
-import CustomerAppointmentsPage from "@/pages/customer/appointments-page";
-import CustomerProfilePage from "@/pages/customer/profile-page";
-import ProviderDashboard from "@/pages/provider/dashboard";
-import ProviderAppointments from "@/pages/provider/appointments";
-import ProviderServices from "@/pages/provider/services";
-import ProviderSettings from "@/pages/provider/settings";
-import AdminEmployeeManagement from "@/pages/admin/employee-management";
+import CustomerDashboardPage from "@/pages/customer/dashboard-page";
+import ProviderDashboardPage from "@/pages/provider/dashboard-page";
+import AdminDashboardPage from "@/pages/admin/dashboard-page";
 import { ProtectedRoute } from "@/lib/protected-route";
 import { AuthProvider } from "@/hooks/use-auth";
+import { UserRole } from "@shared/schema";
 
 function Router() {
   return (
@@ -25,32 +21,29 @@ function Router() {
       
       {/* Customer routes */}
       <Route path="/customer">
-        <ProtectedRoute path="/customer" component={CustomerHomePage} />
-      </Route>
-      <Route path="/customer/appointments">
-        <ProtectedRoute path="/customer/appointments" component={CustomerAppointmentsPage} />
-      </Route>
-      <Route path="/customer/profile">
-        <ProtectedRoute path="/customer/profile" component={CustomerProfilePage} />
+        <ProtectedRoute 
+          path="/customer" 
+          component={CustomerDashboardPage} 
+          requiredRole={UserRole.CUSTOMER}
+        />
       </Route>
       
       {/* Provider routes */}
       <Route path="/provider">
-        <ProtectedRoute path="/provider" component={ProviderDashboard} />
-      </Route>
-      <Route path="/provider/appointments">
-        <ProtectedRoute path="/provider/appointments" component={ProviderAppointments} />
-      </Route>
-      <Route path="/provider/services">
-        <ProtectedRoute path="/provider/services" component={ProviderServices} />
-      </Route>
-      <Route path="/provider/settings">
-        <ProtectedRoute path="/provider/settings" component={ProviderSettings} />
+        <ProtectedRoute 
+          path="/provider" 
+          component={ProviderDashboardPage} 
+          requiredRole={UserRole.PROVIDER}
+        />
       </Route>
       
       {/* Admin routes */}
-      <Route path="/admin/employees">
-        <ProtectedRoute path="/admin/employees" component={AdminEmployeeManagement} />
+      <Route path="/admin">
+        <ProtectedRoute 
+          path="/admin" 
+          component={AdminDashboardPage} 
+          requiredRole={UserRole.ADMIN}
+        />
       </Route>
       
       {/* Fallback to 404 */}
