@@ -1,0 +1,139 @@
+🎯 **Website Design for Booking Appointments Between Customers and Service Providers**  
+
+The website allows customers to easily book appointments with service providers in various fields such as healthcare, sports, and personal care. It also provides a comprehensive dashboard for service providers to manage their appointments and services. The system includes only one administrator who can modify employee information.  
+
+---
+
+### 🔹 **1- Landing Page (For Customers & Advertisers)**  
+
+📌 **Content:**  
+- An introduction explaining the website's benefits and how it works.  
+- An animated image demonstrating how to use the website.  
+- **Login button** for customers.  
+- **Sign-up button** for new customers.  
+- **Login button** for service providers.  
+- A display of available booking categories (Healthcare - Sports - Personal Care) with attractive icons.  
+- A section featuring user reviews about the website.  
+
+🖥️ **Design:**  
+- Elegant and user-friendly interface.  
+- Responsive design that works on all devices.  
+- Eye-friendly colors with clear buttons for booking and registration.  
+
+---
+
+### 🔹 **Customer Pages**  
+
+#### **2- Home Page (After Login)**  
+📌 **Content:**  
+- A welcome message displaying the user's name.  
+- A list of available booking categories (Healthcare - Sports - Personal Care).  
+- When selecting a category, available services within that category are displayed.  
+- Clicking on a service directs the user to a page showing available service providers in their city.  
+
+🔗 **Navbar contains:**  
+- **Home Page button.**  
+- **Search button** to find a specific service provider.  
+- **User profile menu**, which includes:  
+  - Personal information.  
+  - Booked appointments.  
+  - Logout button.  
+
+#### **3- Personal Information Page**  
+📌 **Content:**  
+Displays user information, including:  
+- First and last name.  
+- Profile picture.  
+- Date of birth.  
+- Phone number.  
+- Email address.  
+- Unique username.  
+- **Edit button** to update personal details.  
+
+🔗 **Navbar remains the same as in the Home Page.**  
+
+#### **4- Booked Appointments Page**  
+📌 **Content:**  
+A list of all booked appointments, including details such as:  
+- Service provider’s name.  
+- The booked service.  
+- Appointment date and time.  
+- Appointment status (Confirmed, Pending, Canceled).  
+- **"Cancel Appointment" button** with a confirmation alert before cancellation.  
+
+🔗 **Navbar remains the same as in the Home Page.**  
+
+---
+
+### 🔹 **Service Provider Pages (Shop/Business Owners)**  
+
+#### **5- Login & Dashboard**  
+📌 **Content:**  
+- Login form for service providers.  
+- After logging in, they are redirected to their dashboard.  
+
+#### **6- Service Provider Dashboard**  
+📌 **Content:**  
+- **Appointment Management:**  
+  - View a list of booked appointments.  
+  - Ability to confirm or cancel appointments.  
+
+- **Service Management:**  
+  - Add new services.  
+  - Edit or delete existing services.  
+
+- **Account Settings:**  
+  - Update personal information (email, phone number, working hours, etc.).  
+
+🔗 **Navbar contains:**  
+- **Dashboard button.**  
+- **Booked Appointments button.**  
+- **Service Management button.**  
+- **Account Settings button.**  
+- **Logout button.**  
+
+#### **7- Booked Appointments Page (For Service Providers)**  
+📌 **Content:**  
+- A list of all appointments booked by customers.  
+- Ability to confirm or cancel appointments.  
+- **"Send Notification to Customer" button** when confirming or canceling an appointment.  
+
+🔗 **Navbar remains the same as in the Dashboard.**  
+
+#### **8- Company Settings Page**  
+📌 **Content:**  
+A form allowing the service provider to update their business details, including:  
+- Company name.  
+- Address.  
+- Working hours.  
+- List of offered services.  
+- **"Save Changes" button.**  
+
+🔗 **Navbar remains the same as in the Dashboard.**  
+
+---
+
+### 🔹 **Administrator Page - Employee Management**  
+
+#### **9- Employee Management Page (For Administrator Only)**  
+📌 **Content:**  
+This page is only accessible to the system administrator, allowing them to:  
+- **Add new employees.**  
+- **Edit existing employees' information** (name, phone number, email, working hours).  
+- **Delete employees if necessary.**  
+- **View both booked and unbooked appointments for each employee.**  
+- **When editing an employee’s information, all associated appointments are automatically updated.**  
+- **Employees cannot edit their own information; only the administrator has this authority.**  
+
+🔗 **Navbar remains the same as in the Dashboard.**  
+
+---
+
+### 🎯 **Common Features Across All Pages**  
+
+✅ Simple and user-friendly design.  
+✅ Unified **Navbar** for easy navigation.  
+✅ Search and filtering options for quick access to service providers.  
+✅ Responsive design compatible with various devices.  
+✅ Instant notifications for customers regarding their appointment status.  
+✅ Employee data modification is restricted to the administrator for accuracy and organization.
