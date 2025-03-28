@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("AppointEase.API")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+513e148ff1ee5042fc1883a617e16c3a4cad7be6")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+4807241b3674c5b1032c3807797d281c6ba4baa4")]
 [assembly: System.Reflection.AssemblyProductAttribute("AppointEase.API")]
 [assembly: System.Reflection.AssemblyTitleAttribute("AppointEase.API")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

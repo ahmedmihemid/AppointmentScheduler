@@ -61,8 +61,24 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+// Configure global exception handling
+app.UseExceptionHandler(appError =>
+{
+    appError.Run(async context =>
+    {
+        context.Response.StatusCode = 500;
+        context.Response.ContentType = "application/json";
+        await context.Response.WriteAsJsonAsync(new { 
+            error = "An unexpected error occurred. Please try again later or contact support." 
+        });
+    });
+});
+
 app.UseHttpsRedirection();
 app.UseCors("CorsPolicy");
+
+// Custom JWT middleware
+app.UseMiddleware<JwtMiddleware>();
 
 app.UseAuthentication();
 app.UseAuthorization();

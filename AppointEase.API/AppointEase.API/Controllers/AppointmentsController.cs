@@ -1,157 +1,171 @@
+using AppointEase.API.Auth;
 using AppointEase.API.DTOs;
 using AppointEase.API.Models;
 using AppointEase.API.Repositories;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
-using System.Security.Claims;
 using System.Threading.Tasks;
 
 namespace AppointEase.API.Controllers
 {
-    [ApiController]
     [Route("api/[controller]")]
+    [ApiController]
     [Authorize]
     public class AppointmentsController : ControllerBase
     {
         private readonly IAppointmentRepository _appointmentRepository;
+        private readonly IUserRepository _userRepository;
+        private readonly IProviderRepository _providerRepository;
+        private readonly IServiceRepository _serviceRepository;
 
-        public AppointmentsController(IAppointmentRepository appointmentRepository)
+        public AppointmentsController(
+            IAppointmentRepository appointmentRepository,
+            IUserRepository userRepository,
+            IProviderRepository providerRepository,
+            IServiceRepository serviceRepository)
         {
             _appointmentRepository = appointmentRepository;
+            _userRepository = userRepository;
+            _providerRepository = providerRepository;
+            _serviceRepository = serviceRepository;
         }
 
         [HttpGet("{id}")]
-        public async Task<ActionResult<AppointmentDTO>> GetById(int id)
+        public async Task<ActionResult<Appointment>> GetById(int id)
         {
             var appointment = await _appointmentRepository.GetByIdAsync(id);
             if (appointment == null)
-            {
                 return NotFound();
-            }
 
-            // Check if user has permission to access this appointment
-            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
-            var userRole = User.FindFirst(ClaimTypes.Role)?.Value;
+            // Check if the user has access to this appointment
+            var currentUser = (User)HttpContext.Items["User"];
+            var provider = await _providerRepository.GetByUserIdAsync(currentUser.Id);
 
-            if (userRole != "Admin" && userRole != "Provider" && appointment.CustomerId != userId)
-            {
+            // User can only view appointments they are involved in
+            if (currentUser.Role == UserRole.Customer && appointment.CustomerId != currentUser.Id)
                 return Forbid();
-            }
+            else if (currentUser.Role == UserRole.Provider && provider != null && appointment.ProviderId != provider.Id)
+                return Forbid();
+            else if (currentUser.Role != UserRole.Admin && currentUser.Role != UserRole.Customer && currentUser.Role != UserRole.Provider)
+                return Forbid();
 
-            return Ok(MapToDTO(appointment));
+            return Ok(appointment);
         }
 
-        [HttpGet("customer")]
-        [Authorize(Roles = "Customer")]
-        public async Task<ActionResult<IEnumerable<AppointmentDTO>>> GetByCustomer()
+        [HttpGet("customer/{customerId}")]
+        public async Task<ActionResult<IEnumerable<Appointment>>> GetByCustomer(int customerId)
         {
-            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
-            var appointments = await _appointmentRepository.GetByCustomerIdAsync(userId);
-            return Ok(MapToDTO(appointments));
+            // Check if the user has access to these appointments
+            var currentUser = (User)HttpContext.Items["User"];
+            
+            // Only the customer or admin can view their appointments
+            if (currentUser.Id != customerId && currentUser.Role != UserRole.Admin)
+                return Forbid();
+
+            var appointments = await _appointmentRepository.GetByCustomerIdAsync(customerId);
+            return Ok(appointments);
         }
 
-        [HttpGet("provider")]
-        [Authorize(Roles = "Provider")]
-        public async Task<ActionResult<IEnumerable<AppointmentDTO>>> GetByProvider()
+        [HttpGet("provider/{providerId}")]
+        public async Task<ActionResult<IEnumerable<Appointment>>> GetByProvider(int providerId)
         {
-            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
-            // Note: In a real implementation, you would need to get the provider ID from the user ID
-            // For simplicity, I'm assuming provider ID is same as user ID
-            var appointments = await _appointmentRepository.GetByProviderIdAsync(userId);
-            return Ok(MapToDTO(appointments));
+            // Check if the user has access to these appointments
+            var currentUser = (User)HttpContext.Items["User"];
+            var provider = await _providerRepository.GetByUserIdAsync(currentUser.Id);
+            
+            // Only the provider or admin can view these appointments
+            if ((currentUser.Role == UserRole.Provider && provider != null && provider.Id != providerId) && currentUser.Role != UserRole.Admin)
+                return Forbid();
+
+            var appointments = await _appointmentRepository.GetByProviderIdAsync(providerId);
+            return Ok(appointments);
         }
 
         [HttpGet("status/{status}")]
-        [Authorize(Roles = "Admin")]
-        public async Task<ActionResult<IEnumerable<AppointmentDTO>>> GetByStatus(AppointmentStatus status)
+        [Authorize(UserRole.Admin)]
+        public async Task<ActionResult<IEnumerable<Appointment>>> GetByStatus(string status)
         {
-            var appointments = await _appointmentRepository.GetByStatusAsync(status);
-            return Ok(MapToDTO(appointments));
+            if (!Enum.TryParse<AppointmentStatus>(status, true, out var appointmentStatus))
+                return BadRequest("Invalid appointment status");
+
+            var appointments = await _appointmentRepository.GetByStatusAsync(appointmentStatus);
+            return Ok(appointments);
         }
 
         [HttpPost]
-        [Authorize(Roles = "Customer")]
-        public async Task<ActionResult<AppointmentDTO>> Create(AppointmentCreateDTO dto)
+        public async Task<ActionResult<Appointment>> Create(AppointmentCreateDTO appointmentDto)
         {
-            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
+            // Check if the user has permission to create this appointment
+            var currentUser = (User)HttpContext.Items["User"];
             
-            // Ensure the customer ID in the DTO matches the authenticated user's ID
-            if (dto.CustomerId != userId)
+            // Customer can only create appointments for themselves
+            if (currentUser.Role == UserRole.Customer && appointmentDto.CustomerId != currentUser.Id)
+                return Forbid();
+            
+            // Provider can only create appointments for their own services
+            if (currentUser.Role == UserRole.Provider)
             {
-                return BadRequest("CustomerId in request does not match authenticated user");
+                var provider = await _providerRepository.GetByUserIdAsync(currentUser.Id);
+                if (provider == null || provider.Id != appointmentDto.ProviderId)
+                    return Forbid();
             }
 
+            // Check if the service exists and belongs to the provider
+            var service = await _serviceRepository.GetByIdAsync(appointmentDto.ServiceId);
+            if (service == null)
+                return BadRequest("Invalid service");
+            if (service.ProviderId != appointmentDto.ProviderId)
+                return BadRequest("Service does not belong to the selected provider");
+
+            // Create the appointment
             var appointment = new Appointment
             {
-                CustomerId = dto.CustomerId,
-                ProviderId = dto.ProviderId,
-                ServiceId = dto.ServiceId,
-                EmployeeId = dto.EmployeeId,
-                Date = dto.Date,
+                CustomerId = appointmentDto.CustomerId,
+                ProviderId = appointmentDto.ProviderId,
+                ServiceId = appointmentDto.ServiceId,
+                EmployeeId = appointmentDto.EmployeeId,
+                Date = appointmentDto.Date,
                 Status = AppointmentStatus.Pending,
                 CreatedAt = DateTime.UtcNow
             };
 
             var createdAppointment = await _appointmentRepository.CreateAsync(appointment);
-            return CreatedAtAction(nameof(GetById), new { id = createdAppointment.Id }, MapToDTO(createdAppointment));
+            return CreatedAtAction(nameof(GetById), new { id = createdAppointment.Id }, createdAppointment);
         }
 
         [HttpPut("{id}/status")]
-        public async Task<ActionResult<AppointmentDTO>> UpdateStatus(int id, AppointmentUpdateDTO dto)
+        public async Task<ActionResult<Appointment>> UpdateStatus(int id, AppointmentUpdateDTO updateDto)
         {
             var appointment = await _appointmentRepository.GetByIdAsync(id);
             if (appointment == null)
-            {
                 return NotFound();
+
+            // Check if the user has permission to update this appointment
+            var currentUser = (User)HttpContext.Items["User"];
+            
+            // Customer can only cancel their own appointments
+            if (currentUser.Role == UserRole.Customer)
+            {
+                if (appointment.CustomerId != currentUser.Id)
+                    return Forbid();
+                
+                // Customer can only cancel appointments
+                if (updateDto.Status != AppointmentStatus.Canceled)
+                    return Forbid();
+            }
+            
+            // Provider can only update appointments for their own services
+            if (currentUser.Role == UserRole.Provider)
+            {
+                var provider = await _providerRepository.GetByUserIdAsync(currentUser.Id);
+                if (provider == null || provider.Id != appointment.ProviderId)
+                    return Forbid();
             }
 
-            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
-            var userRole = User.FindFirst(ClaimTypes.Role)?.Value;
-
-            // Providers can update status of their own appointments
-            // Customers can only cancel their own appointments
-            // Admins can update status of any appointment
-            if (userRole == "Admin" || 
-                (userRole == "Provider" && appointment.ProviderId == userId) ||
-                (userRole == "Customer" && appointment.CustomerId == userId && dto.Status == AppointmentStatus.Canceled))
-            {
-                var updatedAppointment = await _appointmentRepository.UpdateStatusAsync(id, dto.Status);
-                return Ok(MapToDTO(updatedAppointment));
-            }
-
-            return Forbid();
-        }
-
-        private AppointmentDTO MapToDTO(Appointment appointment)
-        {
-            return new AppointmentDTO
-            {
-                Id = appointment.Id,
-                CustomerId = appointment.CustomerId,
-                ProviderId = appointment.ProviderId,
-                ServiceId = appointment.ServiceId,
-                EmployeeId = appointment.EmployeeId,
-                Date = appointment.Date,
-                CustomerName = appointment.CustomerName,
-                ProviderName = appointment.ProviderName,
-                ServiceName = appointment.ServiceName,
-                ServiceCategory = appointment.ServiceCategory.ToString(),
-                Duration = appointment.Duration,
-                Status = appointment.Status.ToString(),
-                CreatedAt = appointment.CreatedAt.ToString("yyyy-MM-dd HH:mm")
-            };
-        }
-
-        private IEnumerable<AppointmentDTO> MapToDTO(IEnumerable<Appointment> appointments)
-        {
-            var dtos = new List<AppointmentDTO>();
-            foreach (var appointment in appointments)
-            {
-                dtos.Add(MapToDTO(appointment));
-            }
-            return dtos;
+            // Update the appointment status
+            var updatedAppointment = await _appointmentRepository.UpdateStatusAsync(id, updateDto.Status);
+            return Ok(updatedAppointment);
         }
     }
 }
